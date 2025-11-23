@@ -24,7 +24,7 @@ const (
 var (
 	// Command options ( the -h, --help option is defined by default in the flag package )
 	CommandDescription     = "temp-file-registry is temporary file registry provided through an HTTP web API."
-	commandOptionMaxLength = "22"
+	commandOptionMaxLength = "25"
 	// Define boot arguments.
 	argsPort           = defineFlagValue("p", "port", "Port", 8888).(*int)
 	argsFileExpiration = defineFlagValue("e", "expiration-minutes", "Default file expiration (minutes)", 10).(*int)
@@ -82,7 +82,7 @@ func (fr FileRegistry) String() string {
 }
 
 func init() {
-	flag.Usage = customUsage(os.Stderr, os.Args[0], CommandDescription, "30")
+	flag.Usage = customUsage(os.Stderr, os.Args[0], CommandDescription, commandOptionMaxLength)
 }
 
 func main() {
@@ -109,13 +109,19 @@ func main() {
 	// Listen開始
 	logging(Info, logger, "server(http)", *argsPort)
 	logging(Info, logger, `Start application:
-######## ######## ##     ## ########     ######## #### ##       ########    ########  ########  ######   ####  ######  ######## ########  ##    ## 
-   ##    ##       ###   ### ##     ##    ##        ##  ##       ##          ##     ## ##       ##    ##   ##  ##    ##    ##    ##     ##  ##  ##  
-   ##    ##       #### #### ##     ##    ##        ##  ##       ##          ##     ## ##       ##         ##  ##          ##    ##     ##   ####   
-   ##    ######   ## ### ## ########     ######    ##  ##       ######      ########  ######   ##   ####  ##   ######     ##    ########     ##    
-   ##    ##       ##     ## ##           ##        ##  ##       ##          ##   ##   ##       ##    ##   ##        ##    ##    ##   ##      ##    
-   ##    ##       ##     ## ##           ##        ##  ##       ##          ##    ##  ##       ##    ##   ##  ##    ##    ##    ##    ##     ##    
-   ##    ######## ##     ## ##           ##       #### ######## ########    ##     ## ########  ######   ####  ######     ##    ##     ##    ##`)
+████████╗ ███████╗ ███╗   ███╗ ╗██████╗    ████████ ██╗  ██╗      ████████╗
+╚══██╔══╝ ██╔════╝ ████╗ ████║ ╝██╔══██╗   ██╔════╝ ██║  ██║      ██╔════╝
+   ██║    █████╗   ██╔████╔██║  ██████╔╝   ███████╗ ██║  ██║      ███████╗
+   ██║    ██╔══╝   ██║╚██╔╝██║  ██╔═══╝    ██╔════╝ ██║  ██║      ██╔════╝
+   ██║    ███████╗ ██║ ╚═╝ ██║ ╗██║        ██║      ██║  ████████ ████████╗ 
+   ╚═╝    ╚══════╝ ╚═╝     ╚═╝ ╝╚═╝        ╚═╝      ╚═╝  ╚══════╝ ╚══════
+
+      ██████╗ ███████╗ ██████╗ ██╗███████╗████████╗██████╗ ██╗   ██╗
+      ██╔══██╗██╔════╝██╔════╝ ██║██╔════╝╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+      ██████╔╝█████╗  ██║  ███╗██║███████╗   ██║   ██████╔╝ ╚████╔╝ 
+      ██╔══██╗██╔══╝  ██║   ██║██║╚════██║   ██║   ██╔══██╗  ╚██╔╝  
+      ██║  ██║███████╗╚██████╔╝██║███████║   ██║   ██║  ██║   ██║   
+      ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   `)
 	if err := http.ListenAndServe(":"+strconv.Itoa(*argsPort), nil); err != nil {
 		logging(Panic, logger, err)
 	}
