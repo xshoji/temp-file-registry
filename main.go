@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -9,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,15 +16,15 @@ import (
 
 // Size constants
 const (
-	MB                 = 1 << 20
-	CommandDescription = "temp-file-registry is temporary file registry provided through an HTTP web API."
-	UsageDummy         = "########"
-	UrlPathPrefix      = "/temp-file-registry/api/v1"
+	MB            = 1 << 20
+	UsageDummy    = "########"
+	UrlPathPrefix = "/temp-file-registry/api/v1"
 )
 
 var (
 	// Command options ( the -h, --help option is defined by default in the flag package )
-	commandOptionMaxLength = 0
+	CommandDescription     = "temp-file-registry is temporary file registry provided through an HTTP web API."
+	commandOptionMaxLength = "22"
 	// Define boot arguments.
 	argsPort           = defineFlagValue("p", "port", "Port", 8888).(*int)
 	argsFileExpiration = defineFlagValue("e", "expiration-minutes", "Default file expiration (minutes)", 10).(*int)
@@ -84,7 +82,7 @@ func (fr FileRegistry) String() string {
 }
 
 func init() {
-	formatUsage(CommandDescription, &commandOptionMaxLength, new(bytes.Buffer))
+	flag.Usage = customUsage(os.Stderr, os.Args[0], CommandDescription, "30")
 }
 
 func main() {
@@ -220,37 +218,56 @@ func responseJson(w http.ResponseWriter, statusCode int, bodyJson string) {
 
 // Helper function for flag
 func defineFlagValue(short, long, description string, defaultValue any) (f any) {
-	switch defaultValue.(type) {
-	case string:
-		f = flag.String(short, "", UsageDummy)
-		flag.StringVar(f.(*string), long, defaultValue.(string), description)
-	case int:
-		f = flag.Int(short, 0, UsageDummy)
-		flag.IntVar(f.(*int), long, defaultValue.(int), description)
-	case int64:
-		f = flag.Int64(short, 0, UsageDummy)
-		flag.Int64Var(f.(*int64), long, defaultValue.(int64), description)
+	flagUsage := short + UsageDummy + description
+	defaultValueDescription := ""
+	switch v := defaultValue.(type) {
 	case bool:
 		f = flag.Bool(short, false, UsageDummy)
-		flag.BoolVar(f.(*bool), long, defaultValue.(bool), description)
+		flag.BoolVar(f.(*bool), long, v, flagUsage)
+	case string:
+		var d string
+		if d != defaultValue.(string) {
+			defaultValueDescription = fmt.Sprintf(" (default %s)", defaultValue.(string))
+		}
+		f = flag.String(short, "", UsageDummy)
+		flag.StringVar(f.(*string), long, v, flagUsage+defaultValueDescription)
+	case int:
+		var d int
+		if d != defaultValue.(int) {
+			defaultValueDescription = fmt.Sprintf(" (default %d)", defaultValue.(int))
+		}
+		f = flag.Int(short, 0, UsageDummy)
+		flag.IntVar(f.(*int), long, v, flagUsage+defaultValueDescription)
+	case int64:
+		var d int64
+		if d != defaultValue.(int64) {
+			defaultValueDescription = fmt.Sprintf(" (default %d)", defaultValue.(int64))
+		}
+		f = flag.Int64(short, 0, UsageDummy)
+		flag.Int64Var(f.(*int64), long, v, flagUsage+defaultValueDescription)
 	default:
 		panic("unsupported flag type")
 	}
 	return
 }
 
-func formatUsage(description string, maxLength *int, buffer *bytes.Buffer) {
-	// Get default flags usage
-	func() { flag.CommandLine.SetOutput(buffer); flag.Usage(); flag.CommandLine.SetOutput(os.Stderr) }()
-	re := regexp.MustCompile("(-\\S+)( *\\S*)+\n*\\s+" + UsageDummy + ".*\n*\\s+(-\\S+)( *\\S*)+\n\\s+(.+)")
-	usageFirst := strings.Replace(strings.Replace(strings.Split(buffer.String(), "\n")[0], ":", " [OPTIONS] [-h, --help]", -1), " of ", ": ", -1) + "\n\nDescription:\n  " + description + "\n\nOptions:\n"
-	usageOptions := re.FindAllString(buffer.String(), -1)
-	for _, v := range usageOptions {
-		*maxLength = max(*maxLength, len(re.ReplaceAllString(v, "$1, -$3$4")))
+func customUsage(output io.Writer, cmdName, description, fieldWidth string) func() {
+	return func() {
+		fmt.Fprintf(output, "Usage: %s [OPTIONS] [-h, --help]\n\n", cmdName)
+		fmt.Fprintf(output, "Description:\n  %s\n\n", description)
+		fmt.Fprintln(output, "Options:")
+
+		optionUsages := make([]string, 0)
+		flag.VisitAll(func(f *flag.Flag) {
+			if f.Usage == UsageDummy {
+				return
+			}
+			valueType := strings.Replace(strings.Replace(fmt.Sprintf("%T", f.Value), "*flag.", "", -1), "Value", "", -1)
+			format := "  -%-1s, --%-" + fieldWidth + "s %s\n"
+			short := strings.Split(f.Usage, UsageDummy)[0]
+			mainUsage := strings.Split(f.Usage, UsageDummy)[1]
+			optionUsages = append(optionUsages, fmt.Sprintf(format, short, f.Name+" "+valueType, mainUsage))
+		})
+		fmt.Fprint(output, strings.Join(optionUsages, ""))
 	}
-	usageOptionsRep := make([]string, 0)
-	for _, v := range usageOptions {
-		usageOptionsRep = append(usageOptionsRep, fmt.Sprintf("%-6s%-"+strconv.Itoa(*maxLength)+"s", re.ReplaceAllString(v, "  $1,"), re.ReplaceAllString(v, "-$3$4"))+re.ReplaceAllString(v, "$5\n"))
-	}
-	flag.Usage = func() { _, _ = fmt.Fprintf(flag.CommandLine.Output(), usageFirst+strings.Join(usageOptionsRep, "")) }
 }
