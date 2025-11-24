@@ -4,13 +4,13 @@ A lightweight temporary in-memory file registry exposed via a simple HTTP API.
 Upload files tied to a key and download them for a limited time. Files are stored in memory and automatically removed when expired.
 
 ```
-+--------+     +----------------------+     +--------+
-| Client | --> | temp-file-registry   | --> | Origin |
-|        | <-- | (in-memory storage)  | <-- |        |
-+--------+     +----------------------+     +--------+
++--------+     +------------------------+
+| Client | --> |   temp-file-registry   |
+|        | <-- |   (in-memory storage)  |
++--------+     +------------------------+
                  | Store files by key |
-                 | Auto-clean expired  |
-                 +---------------------+
+                 | Auto-clean expired |
+                 +--------------------+
 ```
 
 ## Features
@@ -32,7 +32,7 @@ This project stores uploaded files in memory and exposes no authentication or ra
 - Default port: `8888`
 - Default file expiration: `10` minutes
 - Default max file size: `1024` MB
-- Log level values: `0:Panic`, `1:Info`, `2:Debug`
+- Log level values: `-4:Debug`, `0:Info`, `4:Warn`, `8:Error`
 - Files stored in memory (map[string]FileRegistry), protected by a mutex and cleaned every minute
 
 ## Installation
@@ -76,12 +76,20 @@ curl -O "http://localhost:8888/temp-file-registry/api/v1/download?key=example-ke
 
 ## Command-line options
 
-Usage: ./temp-file-registry [OPTIONS]
+```bash
+$ temp-file-registry -h
+Usage: temp-file-registry [OPTIONS] [-h, --help]
 
-- `-p`, `--port` (int) : Port (default 8888)
-- `-e`, `--expiration-minutes` (int) : Default file expiration in minutes (default 10)
-- `-m`, `--max-file-size-mb` (int) : Max upload file size in MB (default 1024)
-- `-l`, `--log-level` (int) : Log level (0:Panic, 1:Info, 2:Debug) (default 2)
+Description:
+  temp-file-registry is temporary file registry provided through an HTTP web API.
+
+Options:
+  -e, --expiration-minutes int    Default file expiration (minutes) (default 10)
+  -l, --log-level int             Log level (-4:Debug, 0:Info, 4:Warn, 8:Error)
+  -m, --max-file-size-mb int64    Max file size (MB) (default 1024)
+  -p, --port int                  Port (default 8888)
+
+```
 
 (Help output is produced via Go's flag package; `-h` / `--help` supported.)
 
@@ -156,3 +164,17 @@ Contributions welcome. Possible improvements:
 ## License
 
 Add a LICENSE file or specify a license in the repository.
+
+
+## Development
+
+```
+# execute
+go run main.go
+
+# build
+go build -ldflags="-s -w" -trimpath -o /tmp/$(basename "$PWD") main.go
+
+# start
+/tmp/temp-file-registry
+```
