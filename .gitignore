@@ -34,3 +34,6 @@ output/
 !.gitkeep
 dist
 workspace/
+
+temp-file-registry
+main
