@@ -26,10 +26,10 @@ var (
 	CommandDescription     = "temp-file-registry is temporary file registry provided through an HTTP web API."
 	commandOptionMaxLength = "25"
 	// Command options (the -h and --help options are defined by default in the standard flag package)
-	argsPort           = defineFlagValue("p", "port", "Port", 8888).(*int)
-	argsFileExpiration = defineFlagValue("e", "expiration-minutes", "Default file expiration (minutes)", 10).(*int)
-	argsMaxFileSize    = defineFlagValue("m", "max-file-size-mb", "Max file size (MB)", int64(1024)).(*int64)
-	argsLogLevel       = defineFlagValue("l", "log-level", "Log level (-4:Debug, 0:Info, 4:Warn, 8:Error)", 0).(*int)
+	argsPort           = defineFlagValue("p", "port", "Port", 8888, flag.Int, flag.IntVar)
+	argsFileExpiration = defineFlagValue("e", "expiration-minutes", "Default file expiration (minutes)", 10, flag.Int, flag.IntVar)
+	argsMaxFileSize    = defineFlagValue("m", "max-file-size-mb", "Max file size (MB)", int64(1024), flag.Int64, flag.Int64Var)
+	argsLogLevel       = defineFlagValue("l", "log-level", "Log level (-4:Debug, 0:Info, 4:Warn, 8:Error)", 0, flag.Int, flag.IntVar)
 
 	// Define application logic variables.
 	fileRegistryMap = map[string]FileRegistry{}
@@ -196,33 +196,16 @@ func responseJson(w http.ResponseWriter, statusCode int, bodyJson string) {
 // =======================================
 
 // Helper function for flag
-func defineFlagValue[T comparable](short, long, description string, defaultValue T) any {
+func defineFlagValue[T comparable](short, long, description string, defaultValue T, flagFunc func(name string, value T, usage string) *T, flagVarFunc func(p *T, name string, value T, usage string)) *T {
 	flagUsage := short + UsageDummy + description
 	var zero T
 	if defaultValue != zero {
 		flagUsage = flagUsage + fmt.Sprintf(" (default %v)", defaultValue)
 	}
 
-	switch v := any(defaultValue).(type) {
-	case string:
-		f := flag.String(short, v, UsageDummy)
-		flag.StringVar(f, long, v, flagUsage)
-		return f
-	case int:
-		f := flag.Int(short, v, UsageDummy)
-		flag.IntVar(f, long, v, flagUsage)
-		return f
-	case int64:
-		f := flag.Int64(short, v, UsageDummy)
-		flag.Int64Var(f, long, v, flagUsage)
-		return f
-	case bool:
-		f := flag.Bool(short, v, UsageDummy)
-		flag.BoolVar(f, long, v, flagUsage)
-		return f
-	default:
-		panic("unsupported flag type")
-	}
+	f := flagFunc(short, defaultValue, UsageDummy)
+	flagVarFunc(f, long, defaultValue, flagUsage)
+	return f
 }
 
 func customUsage(output io.Writer, cmdName, description, fieldWidth string) func() {
