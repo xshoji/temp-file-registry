@@ -189,7 +189,7 @@ func cleanExpiredFile() {
 			defer func() { mutex.Unlock() }()
 			for key, fileRegistry := range fileRegistryMap {
 				if fileRegistry.expiredAt.Before(time.Now()) {
-					slog.Debug("[File cleaner goroutine] File expired. >>", fileRegistry.String())
+					slog.Debug("[File cleaner goroutine] File expired. >>", "registry", fileRegistry.String())
 					delete(fileRegistryMap, key)
 				}
 			}
