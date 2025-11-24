@@ -208,33 +208,29 @@ func responseJson(w http.ResponseWriter, statusCode int, bodyJson string) {
 // =======================================
 
 // Helper function for flag
-// defineFlagValue をジェネリクスで共通化した実装例
 func defineFlagValue[T comparable](short, long, description string, defaultValue T) any {
-	// 共通の Usage 組み立て（ゼロ値と比較）
 	flagUsage := short + UsageDummy + description
 	var zero T
-	longUsage := flagUsage
 	if defaultValue != zero {
-		longUsage = flagUsage + fmt.Sprintf(" (default %v)", defaultValue)
+		flagUsage = flagUsage + fmt.Sprintf(" (default %v)", defaultValue)
 	}
 
-	// 型ごとの flag 登録は type switch で実行（flag パッケージの API が型別のため）
 	switch v := any(defaultValue).(type) {
 	case string:
 		f := flag.String(short, v, UsageDummy)
-		flag.StringVar(f, long, v, longUsage)
+		flag.StringVar(f, long, v, flagUsage)
 		return f
 	case int:
 		f := flag.Int(short, v, UsageDummy)
-		flag.IntVar(f, long, v, longUsage)
+		flag.IntVar(f, long, v, flagUsage)
 		return f
 	case int64:
 		f := flag.Int64(short, v, UsageDummy)
-		flag.Int64Var(f, long, v, longUsage)
+		flag.Int64Var(f, long, v, flagUsage)
 		return f
 	case bool:
 		f := flag.Bool(short, v, UsageDummy)
-		flag.BoolVar(f, long, v, longUsage)
+		flag.BoolVar(f, long, v, flagUsage)
 		return f
 	default:
 		panic("unsupported flag type")
