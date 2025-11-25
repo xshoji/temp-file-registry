@@ -56,7 +56,6 @@ curl -O "http://localhost:8888/temp-file-registry/api/v1/download?key=mykey"
 ## Options
 
 ```bash
-$ temp-file-registry -h
 Usage: temp-file-registry [OPTIONS] [-h, --help]
 
 Description:
@@ -67,7 +66,6 @@ Options:
   -l, --log-level int             Log level (-4:Debug, 0:Info, 4:Warn, 8:Error)
   -m, --max-file-size-mb int64    Max file size (MB) (default 1024)
   -p, --port int                  Port (default 8888)
-
 ```
 
 ## API
