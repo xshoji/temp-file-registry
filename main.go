@@ -25,7 +25,7 @@ const (
 
 var (
 	CommandDescription     = "temp-file-registry is temporary file registry provided through an HTTP web API."
-	commandOptionMaxLength = "25"
+	commandOptionMaxLength = 0
 	// Command options (the -h and --help options are defined by default in the standard flag package)
 	argsPort           = defineFlagValue("p", "port" /*               */, "Port" /*                                          */, 8888, flag.Int, flag.IntVar)
 	argsFileExpiration = defineFlagValue("e", "expiration-minutes" /* */, "Default file expiration (minutes)" /*             */, 10, flag.Int, flag.IntVar)
@@ -54,7 +54,7 @@ func init() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Llongfile)
 
 	// Set custom usage for flag
-	flag.Usage = customUsage(os.Stderr, CommandDescription, commandOptionMaxLength)
+	flag.Usage = customUsage(os.Stderr, CommandDescription, strconv.Itoa(commandOptionMaxLength))
 }
 
 func main() {
@@ -66,7 +66,7 @@ func main() {
 	// Set log level
 	slog.SetLogLoggerLevel(slog.Level(*argsLogLevel))
 
-	slog.Info("\n[ Command options ]\n" + getOptionsUsage(commandOptionMaxLength, true))
+	slog.Info("\n[ Command options ]\n" + getOptionsUsage(strconv.Itoa(commandOptionMaxLength), true))
 
 	//-------------------------
 	// 各パスの処理
@@ -191,7 +191,7 @@ func defineFlagValue[T comparable](short, long, description string, defaultValue
 	if defaultValue != zero {
 		flagUsage = flagUsage + fmt.Sprintf(" (default %v)", defaultValue)
 	}
-
+	commandOptionMaxLength = max(commandOptionMaxLength, len(fmt.Sprintf("%s", long))+8)
 	f := flagFunc(long, defaultValue, flagUsage)
 	flagVarFunc(f, short, defaultValue, UsageDummy)
 	return f
