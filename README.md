@@ -56,7 +56,7 @@ curl -O "http://localhost:8888/temp-file-registry/api/v1/download?key=mykey"
 ## Options
 
 ```bash
-Usage: temp-file-registry [OPTIONS] [-h, --help]
+Usage: temp-file-registry [OPTIONS]
 
 Description:
   temp-file-registry is temporary file registry provided through an HTTP web API.
