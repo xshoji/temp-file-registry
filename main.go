@@ -27,10 +27,10 @@ var (
 	CommandDescription     = "temp-file-registry is temporary file registry provided through an HTTP web API."
 	commandOptionMaxLength = 0
 	// Command options (the -h and --help options are defined by default in the standard flag package)
-	argsPort           = defineFlagValue("p", "port" /*               */, "Port" /*                                          */, 8888, flag.Int, flag.IntVar)
-	argsFileExpiration = defineFlagValue("e", "expiration-minutes" /* */, "Default file expiration (minutes)" /*             */, 10, flag.Int, flag.IntVar)
-	argsMaxFileSize    = defineFlagValue("m", "max-file-size-mb" /*   */, "Max file size (MB)" /*                            */, int64(1024), flag.Int64, flag.Int64Var)
-	argsLogLevel       = defineFlagValue("l", "log-level" /*          */, "Log level (-4:Debug, 0:Info, 4:Warn, 8:Error)" /* */, 0, flag.Int, flag.IntVar)
+	argsPort           = defineFlagValue("p", "port" /*               */, "Port" /*                                                       */, 8888, flag.Int, flag.IntVar)
+	argsFileExpiration = defineFlagValue("e", "expiration-minutes" /* */, "Default file expiration (minutes)" /*                          */, 10, flag.Int, flag.IntVar)
+	argsMaxFileSize    = defineFlagValue("m", "max-file-size-mb" /*   */, "Max file size (MB)" /*                                         */, int64(1024), flag.Int64, flag.Int64Var)
+	argsLogLevel       = defineFlagValue("l", "log-level" /*          */, "Log level (-4:Debug, 0:Info, 4:Warn, 8:Error) (default 0)" /* */, 0, flag.Int, flag.IntVar)
 
 	// Define application logic variables.
 	fileRegistryMap = map[string]FileRegistry{}
