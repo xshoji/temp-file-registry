@@ -55,7 +55,7 @@ curl -O "http://localhost:8888/temp-file-registry/api/v1/download?key=mykey"
 
 ## Options
 
-```bash
+```plaintext
 Usage: temp-file-registry [OPTIONS]
 
 Description:
