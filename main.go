@@ -24,13 +24,12 @@ const (
 )
 
 var (
-	CommandDescription     = "temp-file-registry is temporary file registry provided through an HTTP web API."
-	commandOptionMaxLength = 0
+	CommandDescription = "temp-file-registry is temporary file registry provided through an HTTP web API."
 	// Command options (the -h and --help options are defined by default in the standard flag package)
 	argsPort           = defineFlagValue("p", "port" /*               */, "Port" /*                                                       */, 8888, flag.Int, flag.IntVar)
 	argsFileExpiration = defineFlagValue("e", "expiration-minutes" /* */, "Default file expiration (minutes)" /*                          */, 10, flag.Int, flag.IntVar)
 	argsMaxFileSize    = defineFlagValue("m", "max-file-size-mb" /*   */, "Max file size (MB)" /*                                         */, int64(1024), flag.Int64, flag.Int64Var)
-	argsLogLevel       = defineFlagValue("l", "log-level" /*          */, "Log level (-4:Debug, 0:Info, 4:Warn, 8:Error) (default 0)" /* */, 0, flag.Int, flag.IntVar)
+	argsLogLevel       = defineFlagValue("l", "log-level" /*          */, "Log level { -4:Debug | 0:Info | 4:Warn | 8:Error } (default 0)" /* */, 0, flag.Int, flag.IntVar)
 
 	// Define application logic variables.
 	fileRegistryMap = map[string]FileRegistry{}
@@ -54,7 +53,7 @@ func init() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Llongfile)
 
 	// Set custom usage for flag
-	flag.Usage = customUsage(os.Stderr, CommandDescription, strconv.Itoa(commandOptionMaxLength))
+	flag.Usage = customUsage(CommandDescription)
 }
 
 func main() {
@@ -66,7 +65,8 @@ func main() {
 	// Set log level
 	slog.SetLogLoggerLevel(slog.Level(*argsLogLevel))
 
-	slog.Info("\n[ Command options ]\n" + getOptionsUsage(strconv.Itoa(commandOptionMaxLength), true))
+	commandOptions, _ := getOptionsUsage(true)
+	slog.Info("\n[ Command options ]\n" + commandOptions)
 
 	//-------------------------
 	// 各パスの処理
@@ -191,38 +191,45 @@ func defineFlagValue[T comparable](short, long, description string, defaultValue
 	if defaultValue != zero {
 		flagUsage = flagUsage + fmt.Sprintf(" (default %v)", defaultValue)
 	}
-	commandOptionMaxLength = max(commandOptionMaxLength, len(long)+8)
 	f := flagFunc(long, defaultValue, flagUsage)
 	flagVarFunc(f, short, defaultValue, UsageDummy)
 	return f
 }
 
 // Custom usage message
-func customUsage(output io.Writer, description, fieldWidth string) func() {
+func customUsage(description string) func() {
 	return func() {
-		fmt.Fprintf(output, "Usage: %s [OPTIONS]\n\n", func() string { e, _ := os.Executable(); return filepath.Base(e) }())
-		fmt.Fprintf(output, "Description:\n  %s\n\n", description)
-		fmt.Fprintf(output, "Options:\n%s", getOptionsUsage(fieldWidth, false))
+		optionsUsage, requiredOptionExample := getOptionsUsage(false)
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s %s[OPTIONS]\n\n", func() string { e, _ := os.Executable(); return filepath.Base(e) }(), requiredOptionExample)
+		fmt.Fprintf(flag.CommandLine.Output(), "Description:\n  %s\n\n", description)
+		fmt.Fprintf(flag.CommandLine.Output(), "Options:\n%s", optionsUsage)
 	}
 }
 
 // Get options usage message
-func getOptionsUsage(fieldWidth string, currentValue bool) string {
-	optionUsages := make([]string, 0)
+func getOptionsUsage(currentValue bool) (string, string) {
+	requiredOptionExample := ""
+	optionNameWidth := 0
+	usages := make([]string, 0)
+	getType := func(v string) string {
+		return strings.NewReplacer("*flag.boolValue", "", "*flag.", "<", "Value", ">").Replace(v)
+	}
+	flag.VisitAll(func(f *flag.Flag) {
+		optionNameWidth = max(optionNameWidth, len(fmt.Sprintf("%s %s", f.Name, getType(fmt.Sprintf("%T", f.Value))))+4)
+	})
 	flag.VisitAll(func(f *flag.Flag) {
 		if f.Usage == UsageDummy {
 			return
 		}
-		value := strings.NewReplacer("*flag.boolValue", "", "*flag.", "<", "Value", ">").Replace(fmt.Sprintf("%T", f.Value))
+		value := getType(fmt.Sprintf("%T", f.Value))
 		if currentValue {
 			value = f.Value.String()
 		}
-		format := "  -%-1s, --%-" + fieldWidth + "s %s\n"
 		short := strings.Split(f.Usage, UsageDummy)[0]
 		mainUsage := strings.Split(f.Usage, UsageDummy)[1]
-		optionUsages = append(optionUsages, fmt.Sprintf(format, short, f.Name+" "+value, mainUsage))
+		usages = append(usages, fmt.Sprintf("  -%-1s, --%-"+strconv.Itoa(optionNameWidth)+"s %s\n", short, f.Name+" "+value, mainUsage))
 	})
-	return strings.Join(optionUsages, "")
+	return strings.Join(usages, ""), requiredOptionExample
 }
 
 func printApplicationLogo() {

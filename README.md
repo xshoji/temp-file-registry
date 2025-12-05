@@ -62,10 +62,10 @@ Description:
   temp-file-registry is temporary file registry provided through an HTTP web API.
 
 Options:
-  -e, --expiration-minutes <int>   Default file expiration (minutes) (default 10)
-  -l, --log-level <int>            Log level (-4:Debug, 0:Info, 4:Warn, 8:Error) (default 0)
-  -m, --max-file-size-mb <int64>   Max file size (MB) (default 1024)
-  -p, --port <int>                 Port (default 8888)
+  -e, --expiration-minutes <int>     Default file expiration (minutes) (default 10)
+  -l, --log-level <int>              Log level { -4:Debug | 0:Info | 4:Warn | 8:Error } (default 0)
+  -m, --max-file-size-mb <int64>     Max file size (MB) (default 1024)
+  -p, --port <int>                   Port (default 8888)
  ```
 
 ## API
