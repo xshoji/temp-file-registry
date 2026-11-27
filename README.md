@@ -96,16 +96,17 @@ go build -ldflags="-s -w" -trimpath -o /tmp/$(basename "$PWD") main.go
 
 ## Release
 
-Release flow of this repository is integrated with github action.
-Git tag pushing triggers release job.
+Pushing a version tag runs the `goreleaser` workflow to build and publish the
+GitHub release.
 
-```
+```bash
 # Release
-git tag v0.0.2 && git push --tags
+v=v0.0.7; git tag "${v}" && git push origin "refs/tags/${v}"
 
-# Delete tag
-echo "v0.0.1" |xargs -I{} bash -c "git tag -d {} && git push origin :{}"
-
-# Delete tag and recreate new tag and push
-echo "v0.0.2" |xargs -I{} bash -c "git tag -d {} && git push origin :{}; git tag {} -m \"Release beta version.\"; git push --tags"
+# Move the tag to HEAD and re-run the release
+v=v0.0.7; git tag -f "${v}" && git push -f origin "refs/tags/${v}"
 ```
+
+Deleting a tag turns its release into a draft. Move the tag instead to keep the
+release and its existing notes while replacing its assets. Checksums change;
+fix an already published version with a new version instead.
